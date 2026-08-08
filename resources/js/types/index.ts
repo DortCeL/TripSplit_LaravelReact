@@ -44,4 +44,11 @@ export interface Trip {
     id: number;
     name: string;
     description: string;
+    status?: string;
+    owner_id?: number;
+    members_count?: number;
+    owner?: {
+        id: number;
+        name: string;
+    };
 }

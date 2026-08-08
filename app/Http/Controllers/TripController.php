@@ -2,68 +2,178 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Inertia\Inertia;
+use App\Enums\TripMemberRole;
+use App\Enums\TripStatus;
 use App\Models\Trip;
+use App\Models\TripMember;
+use App\Services\BalanceCalculator;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class TripController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $trips = Trip::all();
-        return Inertia::render('Trips/Index', compact('trips'));
+        $this->authorize('viewAny', Trip::class);
+
+        $trips = Trip::query()
+            ->whereHas('members', fn ($q) => $q->where('user_id', $request->user()->id))
+            ->withCount('members')
+            ->with('owner:id,name')
+            ->latest()
+            ->get();
+
+        return Inertia::render('Trips/Index', [
+            'trips' => $trips,
+        ]);
     }
 
-    public function create() {
+    public function create()
+    {
+        $this->authorize('create', Trip::class);
+
         return Inertia::render('Trips/Create');
     }
 
-    public function store(Request $request) {
-        $request->validate([
+    public function store(Request $request)
+    {
+        $this->authorize('create', Trip::class);
+
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string'
+            'description' => 'nullable|string',
         ]);
 
-        Trip::create($request->all());    // save into db
-
-        Inertia::flash([
-                'color' => 'green',
-                'message' => 'Trip created successfully',
-                'tripName' => $request->name,
+        $trip = DB::transaction(function () use ($request, $validated) {
+            $trip = Trip::create([
+                'owner_id' => $request->user()->id,
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?? '',
+                'status' => TripStatus::Active,
             ]);
 
-        return redirect()->route('trips.index');
-    }
+            TripMember::create([
+                'trip_id' => $trip->id,
+                'user_id' => $request->user()->id,
+                'role' => TripMemberRole::Owner,
+            ]);
 
-    public function destroy(Trip $trip) {
-        $trip->delete();
+            return $trip;
+        });
+
         Inertia::flash([
-            'color' => 'red',
-            'message' => 'Trip deleted successfully',
+            'color' => 'green',
+            'message' => 'Trip created successfully',
             'tripName' => $trip->name,
         ]);
-        return redirect()->route('trips.index');
+
+        return redirect()->route('trips.show', $trip);
     }
 
-    public function edit(Trip $trip) {
-        return Inertia::render('Trips/Edit', compact('trip'));
+    public function show(Trip $trip, BalanceCalculator $balances)
+    {
+        $this->authorize('view', $trip);
+
+        $trip->load([
+            'owner:id,name',
+            'members.user:id,name,email',
+            'expenses.items.participants.user:id,name',
+            'expenses.items.payments.payer:id,name',
+            'expenses.creator:id,name',
+        ]);
+
+        return Inertia::render('Trips/Show', [
+            'trip' => $trip,
+            'balances' => $balances->forTrip($trip),
+            'matrix' => $balances->settlementMatrix($trip),
+            'canManage' => request()->user()->can('manageExpenses', $trip),
+            'canManageMembers' => request()->user()->can('manageMembers', $trip),
+            'isOwner' => $trip->isOwner(request()->user()),
+        ]);
     }
 
-    public function update(Request $request, Trip $trip) {
-        $request->validate([
+    public function edit(Trip $trip)
+    {
+        $this->authorize('update', $trip);
+
+        return Inertia::render('Trips/Edit', [
+            'trip' => $trip,
+        ]);
+    }
+
+    public function update(Request $request, Trip $trip)
+    {
+        $this->authorize('update', $trip);
+
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string'
+            'description' => 'nullable|string',
+            'status' => 'nullable|in:active,completed,archived',
         ]);
 
         $trip->update([
-            'name' => $request->name,
-            'description' => $request->description,
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? '',
+            'status' => $validated['status'] ?? $trip->status,
         ]);
+
         Inertia::flash([
             'color' => 'green',
             'message' => 'Trip updated successfully',
-            'tripName' => $request->name,
+            'tripName' => $trip->name,
         ]);
+
+        return redirect()->route('trips.show', $trip);
+    }
+
+    public function destroy(Trip $trip)
+    {
+        $this->authorize('delete', $trip);
+
+        $name = $trip->name;
+        $trip->delete();
+
+        Inertia::flash([
+            'color' => 'red',
+            'message' => 'Trip deleted successfully',
+            'tripName' => $name,
+        ]);
+
         return redirect()->route('trips.index');
+    }
+
+    public function history(Trip $trip)
+    {
+        $this->authorize('view', $trip);
+
+        $trip->load([
+            'expenses.items.participants.user:id,name',
+            'expenses.items.payments.payer:id,name',
+            'expenses.creator:id,name',
+            'settlements.fromUser:id,name',
+            'settlements.toUser:id,name',
+        ]);
+
+        return Inertia::render('Trips/History', [
+            'trip' => $trip,
+            'expenses' => $trip->expenses()->with(['items', 'creator'])->latest()->get(),
+            'settlements' => $trip->settlements()->with(['fromUser', 'toUser'])->latest()->get(),
+        ]);
+    }
+
+    public function totals(Trip $trip, BalanceCalculator $balances)
+    {
+        $this->authorize('view', $trip);
+
+        $expenses = $trip->expenses()->with('items')->get();
+        $totalSpent = $expenses->sum(fn ($expense) => $expense->items->sum('total_amount'));
+
+        return Inertia::render('Trips/Totals', [
+            'trip' => $trip->only(['id', 'name', 'description', 'status']),
+            'totalSpent' => $totalSpent,
+            'expenseCount' => $expenses->count(),
+            'balances' => $balances->forTrip($trip),
+        ]);
     }
 }
