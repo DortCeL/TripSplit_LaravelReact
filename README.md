@@ -1,3 +1,5 @@
+<img width="2560" height="1440" alt="landing_page" src="https://github.com/user-attachments/assets/7ac34f07-26ce-40d5-969e-d47586b5d20d" />
+
 # TripSplit
 
 TripSplit is a collaborative expense splitter for friend groups on trips. You create a trip, invite people, log what was spent, and the app keeps track of who paid, who owes what, and how to settle up.
@@ -159,14 +161,22 @@ vendor/bin/pint           # PHP style fixes
 
 ## Screenshots
 
-![TripSplit Landing page](screenshots/landing_page.png)
-![TripSplit Login/Signup page](screenshots/auth.png)
-![TripSplit Landing page](screenshots/dashboard.png)
-![TripSplit Trip Overview](screenshots/trip_overview.png)
-![TripSplit Trip Members](screenshots/trip_members.png)
-![TripSplit Settlements](screenshots/trip_settlements.png)
-![TripSplit Expense History](screenshots/trip_history.png)
-![TripSplit Total Expense](screenshots/trip_totals.png)
+Landing page<img width="2560" height="1440" alt="landing_page" src="https://github.com/user-attachments/assets/7735783d-66ef-4d57-9f65-99d7f2414822" />
+
+Signup page<img width="2560" height="1440" alt="auth_page" src="https://github.com/user-attachments/assets/c4981c20-841e-4697-8653-691283ef36e7" />
+
+Dashboard<img width="2560" height="1440" alt="dashboard" src="https://github.com/user-attachments/assets/96051d95-0a31-4283-a44e-ac507a30d1bb" />
+
+Trip Overview<img width="2560" height="1440" alt="trip_overview" src="https://github.com/user-attachments/assets/d647d718-d3c1-4b42-b2fe-0495ea30d802" />
+
+rip Members<img width="2560" height="1440" alt="trip_members" src="https://github.com/user-attachments/assets/0d64e2c7-f1f2-4515-91a4-4221b917831f" />
+
+Settlements<img width="2560" height="1440" alt="trip_settlements" src="https://github.com/user-attachments/assets/d32efc23-4d8c-4f7a-a3ba-3dc9dea1c89b" />
+
+Expense History<img width="2560" height="1440" alt="trip_history" src="https://github.com/user-attachments/assets/94713cf3-f9fa-483a-abfe-7fb9b48174a2" />
+
+Total Expense<img width="2560" height="1440" alt="trip_totals" src="https://github.com/user-attachments/assets/93a0f7d5-07a7-4115-9ce4-829fcc6e8a33" />
+
 
 ```md
 ![Welcome](docs/screenshots/welcome.png)
