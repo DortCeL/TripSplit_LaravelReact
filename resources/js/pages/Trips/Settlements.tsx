@@ -1,10 +1,15 @@
 import TripNav from '@/components/trip-nav';
+import { Money, formatTaka } from '@/components/trip/money';
+import { EmptyState, TripHeader, TripPage } from '@/components/trip/page-shell';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm, usePage } from '@inertiajs/react';
+import { ArrowRight, Check, Gift, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -27,6 +32,21 @@ type Settlement = {
 };
 
 type Flash = { color?: string; message?: string; tripName?: string };
+
+const statusStyles: Record<string, string> = {
+    pending: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200',
+    confirmed: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200',
+    rejected: 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200',
+    forgiven: 'border-border bg-secondary text-secondary-foreground',
+};
+
+function SettlementStatusBadge({ status }: { status: string }) {
+    return (
+        <Badge variant="outline" className={cn('capitalize', statusStyles[status] ?? '')}>
+            {status}
+        </Badge>
+    );
+}
 
 export default function Settlements({
     trip,
@@ -67,59 +87,76 @@ export default function Settlements({
             ]}
         >
             <Head title={`${trip.name} · Settlements`} />
-            <div className="space-y-4 p-4">
-                <h1 className="text-2xl font-semibold">{trip.name} · Settlements</h1>
+            <TripPage>
+                <TripHeader
+                    title="Settlements"
+                    description="Request payments, forgive debts, and track settlement history for this trip."
+                />
+
                 <TripNav tripId={trip.id} active="settlements" />
 
-                <Card>
+                <Card className="border-border/80 shadow-sm">
                     <CardHeader>
-                        <CardTitle>Outstanding Debts</CardTitle>
-                        <CardDescription>Request payment or forgive</CardDescription>
+                        <CardTitle className="text-xl">Outstanding debts</CardTitle>
+                        <CardDescription>Request payment or forgive outstanding balances</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {matrix.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No outstanding debts.</p>
+                            <div className="rounded-2xl bg-emerald-50 px-6 py-10 text-center dark:bg-emerald-950/40">
+                                <p className="text-lg font-semibold text-emerald-800 dark:text-emerald-200">All settled up</p>
+                                <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-300">No outstanding debts in this trip.</p>
+                            </div>
                         ) : (
                             matrix.map((row, index) => (
-                                <div key={index} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3">
-                                    <span className="text-sm">
-                                        <strong>{row.from_name}</strong> owes <strong>{row.to_name}</strong> ৳{row.amount}
-                                    </span>
-                                    <div className="flex gap-2">
-                                        {currentUserId === row.from_user_id && (
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => {
-                                                    setSelectedDebt(row);
-                                                    requestForm.setData({
-                                                        from_user_id: row.from_user_id,
-                                                        to_user_id: row.to_user_id,
-                                                        amount: row.amount,
-                                                        paid_amount: row.amount,
-                                                    });
-                                                }}
-                                            >
-                                                Request Payment
-                                            </Button>
-                                        )}
-                                        {(currentUserId === row.to_user_id || canConfirm) && (
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                disabled={forgiveForm.processing}
-                                                onClick={() => {
-                                                    forgiveForm.setData({
-                                                        from_user_id: row.from_user_id,
-                                                        to_user_id: row.to_user_id,
-                                                        amount: row.amount,
-                                                    });
-                                                    forgiveForm.post(route('trips.settlements.forgive', trip.id));
-                                                }}
-                                            >
-                                                Forgive
-                                            </Button>
-                                        )}
+                                <div
+                                    key={index}
+                                    className="flex flex-col gap-4 rounded-2xl border bg-secondary/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                                >
+                                    <div className="min-w-0 space-y-1">
+                                        <p className="text-lg font-semibold">{row.from_name}</p>
+                                        <p className="flex items-center gap-2 text-muted-foreground">
+                                            owes {row.to_name}
+                                            <ArrowRight className="size-4 shrink-0" />
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <Money amount={row.amount} size="md" />
+                                        <div className="flex flex-wrap gap-2">
+                                            {currentUserId === row.from_user_id && (
+                                                <Button
+                                                    size="lg"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setSelectedDebt(row);
+                                                        requestForm.setData({
+                                                            from_user_id: row.from_user_id,
+                                                            to_user_id: row.to_user_id,
+                                                            amount: row.amount,
+                                                            paid_amount: row.amount,
+                                                        });
+                                                    }}
+                                                >
+                                                    Request payment
+                                                </Button>
+                                            )}
+                                            {(currentUserId === row.to_user_id || canConfirm) && (
+                                                <Button
+                                                    size="lg"
+                                                    variant="secondary"
+                                                    disabled={forgiveForm.processing}
+                                                    onClick={() => {
+                                                        forgiveForm.setData({
+                                                            from_user_id: row.from_user_id,
+                                                            to_user_id: row.to_user_id,
+                                                            amount: row.amount,
+                                                        });
+                                                        forgiveForm.post(route('trips.settlements.forgive', trip.id));
+                                                    }}
+                                                >
+                                                    Forgive
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))
@@ -128,16 +165,17 @@ export default function Settlements({
                 </Card>
 
                 {selectedDebt && currentUserId === selectedDebt.from_user_id && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Create Settlement Request</CardTitle>
+                    <Card className="overflow-hidden border-primary/20 shadow-sm">
+                        <CardHeader className="border-b bg-primary/5">
+                            <CardTitle className="text-xl">Create settlement request</CardTitle>
                             <CardDescription>
-                                Paying more than the debt treats the extra as a gift (e.g. 80 for a 77 debt).
+                                Paying more than the debt treats the extra as a gift (e.g. {formatTaka(80)} for a{' '}
+                                {formatTaka(77)} debt).
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-6">
                             <form
-                                className="grid gap-3 sm:grid-cols-2"
+                                className="grid gap-5 sm:grid-cols-2"
                                 onSubmit={(e) => {
                                     e.preventDefault();
                                     requestForm.post(route('trips.settlements.store', trip.id), {
@@ -145,27 +183,36 @@ export default function Settlements({
                                     });
                                 }}
                             >
-                                <div>
-                                    <Label>Debt Amount</Label>
+                                <div className="space-y-2">
+                                    <Label>Debt amount</Label>
                                     <Input
                                         type="number"
+                                        className="h-11 text-base"
                                         value={requestForm.data.amount}
                                         onChange={(e) => requestForm.setData('amount', Number(e.target.value))}
                                     />
                                 </div>
-                                <div>
-                                    <Label>Paid Amount</Label>
+                                <div className="space-y-2">
+                                    <Label>Paid amount</Label>
                                     <Input
                                         type="number"
+                                        className="h-11 text-base"
                                         value={requestForm.data.paid_amount}
                                         onChange={(e) => requestForm.setData('paid_amount', Number(e.target.value))}
                                     />
                                 </div>
-                                <div className="flex gap-2 sm:col-span-2">
-                                    <Button type="submit" disabled={requestForm.processing}>
-                                        Submit Request
+                                {Number(requestForm.data.paid_amount) > Number(requestForm.data.amount) && (
+                                    <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 sm:col-span-2 dark:bg-amber-950/40 dark:text-amber-200">
+                                        <Gift className="size-4 shrink-0" />
+                                        Gift amount:{' '}
+                                        {formatTaka(Number(requestForm.data.paid_amount) - Number(requestForm.data.amount))}
+                                    </div>
+                                )}
+                                <div className="flex flex-wrap gap-3 sm:col-span-2">
+                                    <Button type="submit" size="lg" disabled={requestForm.processing}>
+                                        Submit request
                                     </Button>
-                                    <Button type="button" variant="outline" onClick={() => setSelectedDebt(null)}>
+                                    <Button type="button" variant="outline" size="lg" onClick={() => setSelectedDebt(null)}>
                                         Cancel
                                     </Button>
                                 </div>
@@ -174,44 +221,65 @@ export default function Settlements({
                     </Card>
                 )}
 
-                <Card>
+                <Card className="border-border/80 shadow-sm">
                     <CardHeader>
-                        <CardTitle>Settlement History</CardTitle>
+                        <CardTitle className="text-xl">Settlement history</CardTitle>
+                        <CardDescription>Past requests, confirmations, and forgiven debts</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {settlements.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No settlements yet.</p>
+                            <EmptyState
+                                title="No settlements yet"
+                                description="Settlement requests and confirmations will appear here."
+                            />
                         ) : (
                             settlements.map((settlement) => (
-                                <div key={settlement.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3 text-sm">
-                                    <div>
-                                        <p>
-                                            {settlement.from_user?.name} → {settlement.to_user?.name}: ৳{settlement.amount}
-                                            {settlement.gift_amount > 0 ? ` (+৳${settlement.gift_amount} gift)` : ''}
-                                        </p>
-                                        <p className="text-muted-foreground">
-                                            {settlement.status} · {settlement.type}
-                                        </p>
+                                <div
+                                    key={settlement.id}
+                                    className="flex flex-col gap-4 rounded-2xl border bg-card px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                                >
+                                    <div className="min-w-0 space-y-2">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <p className="font-semibold">
+                                                {settlement.from_user?.name} → {settlement.to_user?.name}
+                                            </p>
+                                            <SettlementStatusBadge status={settlement.status} />
+                                            <Badge variant="secondary" className="capitalize">
+                                                {settlement.type}
+                                            </Badge>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <Money amount={settlement.amount} size="sm" />
+                                            {settlement.gift_amount > 0 && (
+                                                <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+                                                    <Gift className="size-3.5" />+{formatTaka(settlement.gift_amount)} gift
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                     {canConfirm && settlement.status === 'pending' && (
-                                        <div className="flex gap-2">
+                                        <div className="flex flex-wrap gap-2">
                                             <Button
-                                                size="sm"
+                                                size="lg"
+                                                className="gap-2"
                                                 disabled={actionForm.processing || settlement.from_user?.id === currentUserId}
                                                 onClick={() =>
                                                     actionForm.post(route('trips.settlements.confirm', [trip.id, settlement.id]))
                                                 }
                                             >
+                                                <Check className="size-4" />
                                                 Confirm
                                             </Button>
                                             <Button
-                                                size="sm"
+                                                size="lg"
                                                 variant="destructive"
+                                                className="gap-2"
                                                 disabled={actionForm.processing}
                                                 onClick={() =>
                                                     actionForm.post(route('trips.settlements.reject', [trip.id, settlement.id]))
                                                 }
                                             >
+                                                <X className="size-4" />
                                                 Reject
                                             </Button>
                                         </div>
@@ -221,7 +289,7 @@ export default function Settlements({
                         )}
                     </CardContent>
                 </Card>
-            </div>
+            </TripPage>
         </AppLayout>
     );
 }

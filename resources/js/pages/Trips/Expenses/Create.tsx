@@ -1,11 +1,15 @@
+import { TripHeader, TripPage } from '@/components/trip/page-shell';
+import { formatTaka } from '@/components/trip/money';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { TriangleAlert } from 'lucide-react';
+import { Plus, TriangleAlert, Users } from 'lucide-react';
 
 type Member = { id: number; name: string };
 
@@ -21,6 +25,8 @@ type ItemForm = {
     change_taker_id: number | '';
     change_amount: number | '';
 };
+
+const selectClassName = 'h-11 w-full rounded-xl border border-input bg-background px-3 text-base';
 
 function equalSplit(totalAmount: number, participantIds: number[]): Record<number, number> {
     const count = participantIds.length;
@@ -91,7 +97,6 @@ export default function CreateExpense({ trip, members }: { trip: { id: number; n
     };
 
     const handleTotalChange = (index: number, value: number | '') => {
-        // Manual edit clears quantity mode
         updateItem(index, {
             total_amount: value,
             quantity: null,
@@ -133,16 +138,19 @@ export default function CreateExpense({ trip, members }: { trip: { id: number; n
             ]}
         >
             <Head title="Add Expense" />
-            <div className="w-full max-w-3xl p-4">
-                <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+            <TripPage className="max-w-3xl">
+                <TripHeader
+                    title="Add expense"
+                    description={`Record a shared cost for ${trip.name}. Split items fairly and track who paid.`}
+                />
+
+                <form className="space-y-6" onSubmit={handleSubmit}>
                     {Object.keys(errors).length > 0 && (
-                        <Alert>
-                            <div className="flex items-center gap-2">
-                                <TriangleAlert className="text-red-500" />
-                                <AlertTitle className="text-red-500">Error!</AlertTitle>
-                            </div>
+                        <Alert variant="destructive">
+                            <TriangleAlert className="size-4" />
+                            <AlertTitle>Something went wrong</AlertTitle>
                             <AlertDescription>
-                                <ul className="ml-4 list-inside list-disc text-red-500">
+                                <ul className="mt-2 list-inside list-disc">
                                     {Object.entries(errors).map(([key, value]) => (
                                         <li key={key}>{value}</li>
                                     ))}
@@ -151,109 +159,227 @@ export default function CreateExpense({ trip, members }: { trip: { id: number; n
                         </Alert>
                     )}
 
-                    <div>
-                        <Label htmlFor="name">Expense Header</Label>
-                        <Input id="name" value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="Breakfast Day 1" />
-                    </div>
-                    <div>
-                        <Label htmlFor="note">Note</Label>
-                        <Textarea id="note" value={data.note} onChange={(e) => setData('note', e.target.value)} />
-                    </div>
-                    <div>
-                        <Label htmlFor="expense_date">Date</Label>
-                        <Input id="expense_date" type="date" value={data.expense_date} onChange={(e) => setData('expense_date', e.target.value)} />
-                    </div>
-
-                    {data.items.map((item, index) => (
-                        <div key={index} className="space-y-3 rounded-lg border p-4">
-                            <h3 className="font-medium">Item {index + 1}</h3>
-                            <div>
-                                <Label>Item Name</Label>
+                    <Card className="overflow-hidden border-border/80 shadow-sm">
+                        <CardHeader className="border-b bg-secondary/40">
+                            <CardTitle className="text-xl">Trip details</CardTitle>
+                            <CardDescription>General information about this expense</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-5 p-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Expense header</Label>
                                 <Input
-                                    value={item.name}
-                                    onChange={(e) => updateItem(index, { name: e.target.value })}
-                                    placeholder="Chicken"
+                                    id="name"
+                                    className="h-11 text-base"
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    placeholder="Breakfast Day 1"
                                 />
                             </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="note">Note</Label>
+                                <Textarea
+                                    id="note"
+                                    className="min-h-24 text-base"
+                                    value={data.note}
+                                    onChange={(e) => setData('note', e.target.value)}
+                                    placeholder="Optional notes about this expense"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="expense_date">Date</Label>
+                                <Input
+                                    id="expense_date"
+                                    type="date"
+                                    className="h-11 text-base"
+                                    value={data.expense_date}
+                                    onChange={(e) => setData('expense_date', e.target.value)}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                            <div className={`grid gap-3 ${item.quantity !== null ? 'sm:grid-cols-2' : ''}`}>
+                    {data.items.map((item, index) => (
+                        <Card key={index} className="overflow-hidden border-border/80 shadow-sm">
+                            <div className="flex items-center gap-3 border-b bg-primary/5 px-5 py-4">
+                                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                                    {index + 1}
+                                </span>
                                 <div>
-                                    <Label>Total Amount (BDT)</Label>
-                                    <Input
-                                        type="number"
-                                        min={1}
-                                        value={item.total_amount}
-                                        onChange={(e) =>
-                                            handleTotalChange(index, e.target.value === '' ? '' : Number(e.target.value))
-                                        }
-                                    />
-                                    {item.quantity !== null && item.quantity !== '' && item.unit_cost !== null && item.unit_cost !== '' && (
-                                        <p className="mt-1 text-xs text-muted-foreground">
-                                            ৳{item.unit_cost} × {item.quantity} = ৳{item.total_amount}
-                                        </p>
-                                    )}
+                                    <h3 className="text-lg font-semibold">Item {index + 1}</h3>
+                                    <p className="text-sm text-muted-foreground">Amount, split, and payment details</p>
                                 </div>
-                                {item.quantity !== null && (
-                                    <div>
-                                        <Label>Quantity</Label>
+                            </div>
+                            <CardContent className="space-y-6 p-6">
+                                <div className="space-y-2">
+                                    <Label>Item name</Label>
+                                    <Input
+                                        className="h-11 text-base"
+                                        value={item.name}
+                                        onChange={(e) => updateItem(index, { name: e.target.value })}
+                                        placeholder="Chicken biryani"
+                                    />
+                                </div>
+
+                                <div className={`grid gap-4 ${item.quantity !== null ? 'sm:grid-cols-2' : ''}`}>
+                                    <div className="space-y-2">
+                                        <Label>Total amount (BDT)</Label>
                                         <Input
                                             type="number"
                                             min={1}
-                                            value={item.quantity}
-                                            placeholder="e.g. 3"
-                                            onChange={(e) => {
-                                                const quantity = e.target.value === '' ? '' : Number(e.target.value);
-                                                const unitCost =
-                                                    item.unit_cost !== null && item.unit_cost !== ''
-                                                        ? item.unit_cost
-                                                        : item.total_amount === ''
-                                                          ? ''
-                                                          : item.total_amount;
-                                                applyQuantityTotal(index, unitCost, quantity);
-                                            }}
+                                            className="h-11 text-base"
+                                            value={item.total_amount}
+                                            onChange={(e) =>
+                                                handleTotalChange(index, e.target.value === '' ? '' : Number(e.target.value))
+                                            }
                                         />
-                                        <p className="mt-1 text-xs text-muted-foreground">
-                                            Set quantity to multiply the current cost. Editing total removes quantity.
-                                        </p>
+                                        {item.quantity !== null &&
+                                            item.quantity !== '' &&
+                                            item.unit_cost !== null &&
+                                            item.unit_cost !== '' && (
+                                                <p className="text-sm text-muted-foreground">
+                                                    {formatTaka(Number(item.unit_cost))} × {item.quantity} ={' '}
+                                                    {formatTaka(Number(item.total_amount))}
+                                                </p>
+                                            )}
                                     </div>
-                                )}
-                            </div>
-
-                            <div>
-                                <Label>Participants</Label>
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                    {members.map((member) => (
-                                        <Button
-                                            key={member.id}
-                                            type="button"
-                                            size="sm"
-                                            variant={item.participant_ids.includes(member.id) ? 'default' : 'outline'}
-                                            onClick={() => toggleParticipant(index, member.id)}
-                                        >
-                                            {member.name}
-                                        </Button>
-                                    ))}
+                                    {item.quantity !== null && (
+                                        <div className="space-y-2">
+                                            <Label>Quantity</Label>
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                className="h-11 text-base"
+                                                value={item.quantity}
+                                                placeholder="e.g. 3"
+                                                onChange={(e) => {
+                                                    const quantity = e.target.value === '' ? '' : Number(e.target.value);
+                                                    const unitCost =
+                                                        item.unit_cost !== null && item.unit_cost !== ''
+                                                            ? item.unit_cost
+                                                            : item.total_amount === ''
+                                                              ? ''
+                                                              : item.total_amount;
+                                                    applyQuantityTotal(index, unitCost, quantity);
+                                                }}
+                                            />
+                                            <p className="text-sm text-muted-foreground">
+                                                Set quantity to multiply the current cost. Editing total removes quantity.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
-                                <p className="mt-1 text-xs text-muted-foreground">Equal split with BDT remainder rounding is applied automatically.</p>
-                            </div>
 
-                            <div className="space-y-2">
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <Label>Payers (cash handed over)</Label>
-                                    <Button type="button" variant="secondary" size="sm" onClick={() => applyEveryonePaid(index)}>
-                                        Everyone paid their part
+                                <div className="space-y-3 rounded-2xl bg-secondary/40 p-5">
+                                    <div className="flex items-center gap-2">
+                                        <Users className="size-4 text-primary" />
+                                        <Label className="text-base">Participants</Label>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {members.map((member) => {
+                                            const selected = item.participant_ids.includes(member.id);
+                                            return (
+                                                <button
+                                                    key={member.id}
+                                                    type="button"
+                                                    className={cn(
+                                                        'rounded-full px-5 py-2.5 text-sm font-semibold transition-colors',
+                                                        selected
+                                                            ? 'bg-primary text-primary-foreground shadow-sm'
+                                                            : 'border border-input bg-background text-muted-foreground hover:bg-secondary hover:text-foreground',
+                                                    )}
+                                                    onClick={() => toggleParticipant(index, member.id)}
+                                                >
+                                                    {member.name}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Equal split with BDT remainder rounding is applied automatically.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-4 rounded-2xl border bg-card p-5">
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <Label className="text-base">Payers (cash handed over)</Label>
+                                        <Button type="button" variant="secondary" size="lg" onClick={() => applyEveryonePaid(index)}>
+                                            Everyone paid their part
+                                        </Button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {item.payers.map((payer, pIndex) => (
+                                            <div key={pIndex} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                                <select
+                                                    className={selectClassName}
+                                                    value={payer.payer_id}
+                                                    onChange={(e) => {
+                                                        const payers = [...item.payers];
+                                                        payers[pIndex] = { ...payers[pIndex], payer_id: Number(e.target.value) };
+                                                        updateItem(index, { payers });
+                                                    }}
+                                                >
+                                                    {members.map((m) => (
+                                                        <option key={m.id} value={m.id}>
+                                                            {m.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    className="h-11 text-base sm:max-w-48"
+                                                    placeholder="Handed over"
+                                                    value={payer.handed_over}
+                                                    onChange={(e) => {
+                                                        const payers = [...item.payers];
+                                                        payers[pIndex] = {
+                                                            ...payers[pIndex],
+                                                            handed_over: e.target.value === '' ? '' : Number(e.target.value),
+                                                        };
+                                                        updateItem(index, { payers });
+                                                    }}
+                                                />
+                                                {item.payers.length > 1 && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="lg"
+                                                        className="shrink-0"
+                                                        onClick={() =>
+                                                            updateItem(index, {
+                                                                payers: item.payers.filter((_, i) => i !== pIndex),
+                                                            })
+                                                        }
+                                                    >
+                                                        Remove
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="lg"
+                                        className="gap-2"
+                                        onClick={() =>
+                                            updateItem(index, {
+                                                payers: [...item.payers, { payer_id: members[0]?.id ?? '', handed_over: '' }],
+                                            })
+                                        }
+                                    >
+                                        <Plus className="size-4" />
+                                        Add payer
                                     </Button>
                                 </div>
-                                {item.payers.map((payer, pIndex) => (
-                                    <div key={pIndex} className="flex gap-2">
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label>Change taker</Label>
                                         <select
-                                            className="h-9 w-full rounded-md border px-2"
-                                            value={payer.payer_id}
-                                            onChange={(e) => {
-                                                const payers = [...item.payers];
-                                                payers[pIndex] = { ...payers[pIndex], payer_id: Number(e.target.value) };
-                                                updateItem(index, { payers });
-                                            }}
+                                            className={selectClassName}
+                                            value={item.change_taker_id}
+                                            onChange={(e) => updateItem(index, { change_taker_id: Number(e.target.value) })}
                                         >
                                             {members.map((m) => (
                                                 <option key={m.id} value={m.id}>
@@ -261,91 +387,47 @@ export default function CreateExpense({ trip, members }: { trip: { id: number; n
                                                 </option>
                                             ))}
                                         </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Change amount</Label>
                                         <Input
                                             type="number"
                                             min={0}
-                                            placeholder="Handed over"
-                                            value={payer.handed_over}
-                                            onChange={(e) => {
-                                                const payers = [...item.payers];
-                                                payers[pIndex] = {
-                                                    ...payers[pIndex],
-                                                    handed_over: e.target.value === '' ? '' : Number(e.target.value),
-                                                };
-                                                updateItem(index, { payers });
-                                            }}
+                                            className="h-11 text-base"
+                                            value={item.change_amount}
+                                            onChange={(e) =>
+                                                updateItem(index, {
+                                                    change_amount: e.target.value === '' ? '' : Number(e.target.value),
+                                                })
+                                            }
                                         />
-                                        {item.payers.length > 1 && (
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() =>
-                                                    updateItem(index, {
-                                                        payers: item.payers.filter((_, i) => i !== pIndex),
-                                                    })
-                                                }
-                                            >
-                                                Remove
-                                            </Button>
-                                        )}
                                     </div>
-                                ))}
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                        updateItem(index, {
-                                            payers: [...item.payers, { payer_id: members[0]?.id ?? '', handed_over: '' }],
-                                        })
-                                    }
-                                >
-                                    Add Payer
-                                </Button>
-                            </div>
-
-                            <div className="grid gap-2 sm:grid-cols-2">
-                                <div>
-                                    <Label>Change Taker</Label>
-                                    <select
-                                        className="mt-1 h-9 w-full rounded-md border px-2"
-                                        value={item.change_taker_id}
-                                        onChange={(e) => updateItem(index, { change_taker_id: Number(e.target.value) })}
-                                    >
-                                        {members.map((m) => (
-                                            <option key={m.id} value={m.id}>
-                                                {m.name}
-                                            </option>
-                                        ))}
-                                    </select>
                                 </div>
-                                <div>
-                                    <Label>Change Amount</Label>
-                                    <Input
-                                        type="number"
-                                        min={0}
-                                        value={item.change_amount}
-                                        onChange={(e) =>
-                                            updateItem(index, {
-                                                change_amount: e.target.value === '' ? '' : Number(e.target.value),
-                                            })
-                                        }
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                            </CardContent>
+                        </Card>
                     ))}
 
-                    <Button type="button" variant="outline" onClick={() => setData('items', [...data.items, blankItem(members)])}>
-                        Add Another Item
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        className="w-full gap-2"
+                        onClick={() => setData('items', [...data.items, blankItem(members)])}
+                    >
+                        <Plus className="size-4" />
+                        Add another item
                     </Button>
 
-                    <Button type="submit" disabled={processing}>
-                        {processing ? 'Saving...' : 'Create Expense'}
-                    </Button>
+                    <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-2xl border bg-card/95 p-5 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-sm text-muted-foreground">
+                            {data.items.length} item{data.items.length !== 1 ? 's' : ''} ready to save
+                        </p>
+                        <Button type="submit" size="lg" disabled={processing} className="sm:min-w-48">
+                            {processing ? 'Saving...' : 'Create expense'}
+                        </Button>
+                    </div>
                 </form>
-            </div>
+            </TripPage>
         </AppLayout>
     );
 }

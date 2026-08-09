@@ -1,14 +1,14 @@
 import AppLogoIcon from '@/components/app-logo-icon';
 
-export default function Logo() {
+export default function Logo({ className = '' }: { className?: string }) {
     return (
-        <div className="flex items-center gap-2.5">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[#1b1b18] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.06)] dark:bg-[#EDEDEC]">
-                <AppLogoIcon className="size-5 fill-current text-[#FDFDFC] dark:text-[#0a0a0a]" />
+        <div className={`flex items-center gap-2.5 ${className}`}>
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                <AppLogoIcon className="size-5" />
             </div>
             <div className="grid text-left leading-none">
-                <span className="truncate text-sm font-semibold tracking-tight text-[#1b1b18] dark:text-[#EDEDEC]">
-                    Trip<span className="text-[#f53003] dark:text-[#FF4433]">Split</span>
+                <span className="truncate text-base font-bold tracking-tight text-foreground">
+                    Trip<span className="text-primary">Split</span>
                 </span>
             </div>
         </div>

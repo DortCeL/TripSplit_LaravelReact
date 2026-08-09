@@ -13,7 +13,21 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'TripSplit'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Description
+    |--------------------------------------------------------------------------
+    |
+    | Short description used for HTML meta tags and social previews.
+    |
+    */
+
+    'description' => env(
+        'APP_DESCRIPTION',
+        'TripSplit helps friend groups track shared travel expenses, split costs fairly in BDT, and settle up without the spreadsheet chaos.'
+    ),
 
     /*
     |--------------------------------------------------------------------------

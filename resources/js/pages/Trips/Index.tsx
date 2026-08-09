@@ -1,14 +1,15 @@
+import { EmptyState, TripHeader, TripPage } from '@/components/trip/page-shell';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Trip } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { MapPin, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Trips', href: '/trips' },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Trips', href: '/trips' }];
 
 type Flash = { color?: string; message?: string; tripName?: string };
 
@@ -41,49 +42,89 @@ export default function Index() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Trips" />
-            <div className="m-4">
-                <Link href="/trips/create">
-                    <Button variant="default">Create Trip</Button>
-                </Link>
-            </div>
+            <TripPage>
+                <TripHeader
+                    title="Your trips"
+                    description="Open a trip to track expenses, balances, and settlements with your group."
+                    actions={
+                        <Link href="/trips/create">
+                            <Button size="lg" className="gap-2">
+                                <Plus className="size-4" />
+                                New trip
+                            </Button>
+                        </Link>
+                    }
+                />
 
-            {trips.length > 0 ? (
-                <div className="m-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {trips.map((trip) => (
-                        <Card key={trip.id} className="transition-shadow hover:shadow-lg">
-                            <CardHeader>
-                                <CardTitle>{trip.name}</CardTitle>
-                                <CardDescription>{trip.description || 'No description'}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex flex-col gap-3">
-                                <p className="text-sm text-muted-foreground">
-                                    {trip.members_count ?? 0} members
-                                    {trip.owner ? ` · Owner: ${trip.owner.name}` : ''}
-                                </p>
-                                <div className="flex justify-end gap-2">
-                                    <Link href={route('trips.show', trip.id)}>
-                                        <Button variant="default">Open</Button>
-                                    </Link>
-                                    <Link href={route('trips.edit', trip.id)}>
-                                        <Button variant="outline">Edit</Button>
-                                    </Link>
-                                    <Button
-                                        variant="destructive"
-                                        disabled={processing}
-                                        onClick={() => handleDelete(trip.id, trip.name)}
-                                    >
-                                        Delete
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            ) : (
-                <div className="py-12 text-center text-gray-500">
-                    <p>No trips yet. Start your first adventure!</p>
-                </div>
-            )}
+                {trips.length > 0 ? (
+                    <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                        {trips.map((trip) => (
+                            <Card
+                                key={trip.id}
+                                className="group overflow-hidden border-border/80 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                            >
+                                <div className="h-1.5 bg-gradient-to-r from-primary via-teal-400 to-amber-300" />
+                                <CardHeader className="pb-3">
+                                    <div className="mb-2 flex items-start justify-between gap-2">
+                                        <CardTitle className="text-xl leading-snug">{trip.name}</CardTitle>
+                                        <Badge variant="secondary" className="capitalize">
+                                            {trip.status ?? 'active'}
+                                        </Badge>
+                                    </div>
+                                    <CardDescription className="line-clamp-2 text-sm leading-relaxed">
+                                        {trip.description || 'No description yet'}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 font-medium text-secondary-foreground">
+                                            <Users className="size-3.5" />
+                                            {trip.members_count ?? 0} members
+                                        </span>
+                                        {trip.owner ? (
+                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1">
+                                                <MapPin className="size-3.5" />
+                                                {trip.owner.name}
+                                            </span>
+                                        ) : null}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        <Link href={route('trips.show', trip.id)} className="flex-1">
+                                            <Button className="w-full" size="lg">
+                                                Open trip
+                                            </Button>
+                                        </Link>
+                                        <Link href={route('trips.edit', trip.id)}>
+                                            <Button variant="outline" size="lg" className="px-3">
+                                                <Pencil className="size-4" />
+                                            </Button>
+                                        </Link>
+                                        <Button
+                                            variant="outline"
+                                            size="lg"
+                                            className="px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                            disabled={processing}
+                                            onClick={() => handleDelete(trip.id, trip.name)}
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <EmptyState
+                        title="No trips yet"
+                        description="Create your first trip and start splitting expenses fairly with friends."
+                        action={
+                            <Link href="/trips/create">
+                                <Button size="lg">Create your first trip</Button>
+                            </Link>
+                        }
+                    />
+                )}
+            </TripPage>
         </AppLayout>
     );
 }

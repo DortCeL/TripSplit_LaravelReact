@@ -15,10 +15,13 @@ export default function AuthCardLayout({
     return (
         <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
             <div className="flex w-full max-w-md flex-col gap-6">
-                <Link href={route('home')} className="flex items-center gap-2 self-center font-medium">
-                    <div className="flex h-9 w-9 items-center justify-center">
-                        <AppLogoIcon className="size-9 fill-current text-black dark:text-white" />
+                <Link href={route('home')} className="flex items-center gap-2.5 self-center font-medium">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                        <AppLogoIcon className="size-6" />
                     </div>
+                    <span className="text-lg font-bold tracking-tight">
+                        Trip<span className="text-primary">Split</span>
+                    </span>
                 </Link>
 
                 <div className="flex flex-col gap-6">
