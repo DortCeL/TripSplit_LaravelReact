@@ -177,13 +177,6 @@ Expense History<img width="2560" height="1440" alt="trip_history" src="https://g
 
 Total Expense<img width="2560" height="1440" alt="trip_totals" src="https://github.com/user-attachments/assets/93a0f7d5-07a7-4115-9ce4-829fcc6e8a33" />
 
-
-```md
-![Welcome](docs/screenshots/welcome.png)
-![Trip overview](docs/screenshots/trip-show.png)
-![Add expense](docs/screenshots/expense-create.png)
-```
-
 ## Testing
 
 ```bash
