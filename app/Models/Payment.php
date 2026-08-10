@@ -16,6 +16,9 @@ class Payment extends Model
     protected function casts(): array
     {
         return [
+            'id' => 'integer',
+            'expense_item_id' => 'integer',
+            'payer_id' => 'integer',
             'amount_paid' => 'integer',
         ];
     }

@@ -3,7 +3,7 @@ import { Link } from '@inertiajs/react';
 import { History, LayoutDashboard, Receipt, Users, Wallet } from 'lucide-react';
 
 type TripNavProps = {
-    tripId: number;
+    tripId: number | string;
     active?: 'overview' | 'members' | 'settlements' | 'history' | 'totals';
 };
 
@@ -26,7 +26,7 @@ export default function TripNav({ tripId, active = 'overview' }: TripNavProps) {
                     return (
                         <Link
                             key={link.key}
-                            href={route(link.routeName, tripId)}
+                            href={route(link.routeName, Number(tripId))}
                             className={cn(
                                 'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors',
                                 isActive

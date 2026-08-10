@@ -122,7 +122,7 @@ export default function Settlements({
                                     <div className="flex flex-wrap items-center gap-3">
                                         <Money amount={row.amount} size="md" />
                                         <div className="flex flex-wrap gap-2">
-                                            {currentUserId === row.from_user_id && (
+                                            {Number(currentUserId) === Number(row.from_user_id) && (
                                                 <Button
                                                     size="lg"
                                                     variant="outline"
@@ -139,7 +139,7 @@ export default function Settlements({
                                                     Request payment
                                                 </Button>
                                             )}
-                                            {(currentUserId === row.to_user_id || canConfirm) && (
+                                            {(Number(currentUserId) === Number(row.to_user_id) || canConfirm) && (
                                                 <Button
                                                     size="lg"
                                                     variant="secondary"
@@ -164,7 +164,7 @@ export default function Settlements({
                     </CardContent>
                 </Card>
 
-                {selectedDebt && currentUserId === selectedDebt.from_user_id && (
+                {selectedDebt && Number(currentUserId) === Number(selectedDebt.from_user_id) && (
                     <Card className="overflow-hidden border-primary/20 shadow-sm">
                         <CardHeader className="border-b bg-primary/5">
                             <CardTitle className="text-xl">Create settlement request</CardTitle>
@@ -262,7 +262,7 @@ export default function Settlements({
                                             <Button
                                                 size="lg"
                                                 className="gap-2"
-                                                disabled={actionForm.processing || settlement.from_user?.id === currentUserId}
+                                                disabled={actionForm.processing || Number(settlement.from_user?.id) === Number(currentUserId)}
                                                 onClick={() =>
                                                     actionForm.post(route('trips.settlements.confirm', [trip.id, settlement.id]))
                                                 }

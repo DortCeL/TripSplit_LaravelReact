@@ -22,6 +22,30 @@ test('user can create a trip and becomes owner', function () {
         ->and($trip->members()->where('user_id', $user->id)->where('role', TripMemberRole::Owner)->exists())->toBeTrue();
 });
 
+test('user can create a trip with empty description and view it', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->post(route('trips.store'), [
+            'name' => 'Empty Desc',
+            'description' => '',
+        ]);
+
+    $trip = Trip::query()->where('name', 'Empty Desc')->first();
+
+    expect($trip)->not->toBeNull();
+
+    $response->assertRedirect(route('trips.show', $trip));
+
+    $this->actingAs($user)
+        ->get(route('trips.show', $trip))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Trips/Show')
+            ->where('trip.id', $trip->id)
+            ->where('trip.name', 'Empty Desc'));
+});
+
 test('members only see their own trips', function () {
     $owner = User::factory()->create();
     $outsider = User::factory()->create();

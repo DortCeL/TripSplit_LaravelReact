@@ -77,7 +77,7 @@ export default function Show() {
     }, [flash]);
 
     const { delete: destroy, processing } = useForm();
-    const you = balances.find((b) => b.user_id === auth.user.id) ?? balances[0];
+    const you = balances.find((b) => Number(b.user_id) === Number(auth.user.id)) ?? balances[0];
     const owedToYou = Math.max(you?.net_balance ?? 0, 0);
     const youOwe = Math.abs(Math.min(you?.net_balance ?? 0, 0));
 

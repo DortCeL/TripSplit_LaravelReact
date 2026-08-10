@@ -137,7 +137,7 @@ class ExpenseController extends Controller
     public function destroy(Trip $trip, Expense $expense)
     {
         $this->authorize('manageExpenses', $trip);
-        abort_unless($expense->trip_id === $trip->id, 404);
+        abort_unless((int) $expense->trip_id === (int) $trip->id, 404);
 
         $name = $expense->name;
         $expense->delete();

@@ -19,6 +19,9 @@ class Expense extends Model
     protected function casts(): array
     {
         return [
+            'id' => 'integer',
+            'trip_id' => 'integer',
+            'created_by' => 'integer',
             'expense_date' => 'date',
         ];
     }

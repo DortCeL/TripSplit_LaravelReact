@@ -17,6 +17,9 @@ class TripMember extends Model
     protected function casts(): array
     {
         return [
+            'id' => 'integer',
+            'trip_id' => 'integer',
+            'user_id' => 'integer',
             'role' => TripMemberRole::class,
         ];
     }

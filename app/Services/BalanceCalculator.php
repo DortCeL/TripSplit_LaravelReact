@@ -29,17 +29,23 @@ class BalanceCalculator
     public function forUser(Trip $trip, User $user): array
     {
         $expenseItemIds = $trip->expenses()->with('items')->get()
-            ->flatMap(fn ($expense) => $expense->items->pluck('id'));
+            ->flatMap(fn ($expense) => $expense->items->pluck('id'))
+            ->filter()
+            ->values();
 
-        $totalPaid = (int) Payment::query()
-            ->whereIn('expense_item_id', $expenseItemIds)
-            ->where('payer_id', $user->id)
-            ->sum('amount_paid');
+        $totalPaid = $expenseItemIds->isEmpty()
+            ? 0
+            : (int) Payment::query()
+                ->whereIn('expense_item_id', $expenseItemIds)
+                ->where('payer_id', $user->id)
+                ->sum('amount_paid');
 
-        $totalOwed = (int) ItemParticipant::query()
-            ->whereIn('expense_item_id', $expenseItemIds)
-            ->where('user_id', $user->id)
-            ->sum('share_amount');
+        $totalOwed = $expenseItemIds->isEmpty()
+            ? 0
+            : (int) ItemParticipant::query()
+                ->whereIn('expense_item_id', $expenseItemIds)
+                ->where('user_id', $user->id)
+                ->sum('share_amount');
 
         $settledStatuses = [SettlementStatus::Confirmed, SettlementStatus::Forgiven];
 
@@ -61,7 +67,7 @@ class BalanceCalculator
         $net = ($totalPaid + $settlementsSent) - ($totalOwed + $settlementsReceived);
 
         return [
-            'user_id' => $user->id,
+            'user_id' => (int) $user->id,
             'name' => $user->name,
             'total_paid' => $totalPaid,
             'total_owed' => $totalOwed,
@@ -128,11 +134,11 @@ class BalanceCalculator
             $debtors[$i]['net_balance'] += $amount;
             $creditors[$j]['net_balance'] -= $amount;
 
-            if ($debtors[$i]['net_balance'] === 0) {
+            if ((int) $debtors[$i]['net_balance'] === 0) {
                 $i++;
             }
 
-            if ($creditors[$j]['net_balance'] === 0) {
+            if ((int) $creditors[$j]['net_balance'] === 0) {
                 $j++;
             }
         }

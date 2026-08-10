@@ -17,6 +17,8 @@ class ExpenseItem extends Model
     protected function casts(): array
     {
         return [
+            'id' => 'integer',
+            'expense_id' => 'integer',
             'total_amount' => 'integer',
         ];
     }

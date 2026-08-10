@@ -88,7 +88,7 @@ class SettlementController extends Controller
     public function confirm(Request $request, Trip $trip, Settlement $settlement)
     {
         $this->authorize('confirmSettlement', $trip);
-        abort_unless($settlement->trip_id === $trip->id, 404);
+        abort_unless((int) $settlement->trip_id === (int) $trip->id, 404);
 
         if ($settlement->status !== SettlementStatus::Pending) {
             throw ValidationException::withMessages([
@@ -120,7 +120,7 @@ class SettlementController extends Controller
     public function reject(Request $request, Trip $trip, Settlement $settlement)
     {
         $this->authorize('confirmSettlement', $trip);
-        abort_unless($settlement->trip_id === $trip->id, 404);
+        abort_unless((int) $settlement->trip_id === (int) $trip->id, 404);
 
         if ($settlement->status !== SettlementStatus::Pending) {
             throw ValidationException::withMessages([

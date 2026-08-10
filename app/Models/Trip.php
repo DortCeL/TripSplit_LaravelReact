@@ -26,6 +26,8 @@ class Trip extends Model
     protected function casts(): array
     {
         return [
+            'id' => 'integer',
+            'owner_id' => 'integer',
             'status' => TripStatus::class,
         ];
     }

@@ -4,4 +4,7 @@ ep-fragrant-sunset-azzrz074-pooler.c-3.ap-southeast-1.aws.neon.tech
 │──────────────────────────│ │──────────────────────────────────│
         endpoint ID                    rest of Neon hostname
 
-        
+
+
+# Issue after deployment : creating a trip breaks the app. my guess was that in sqlite i used normal int as trip id and all the ids for simplicity. but since now this is deployed and i switched to postgres, the id should be string / bigints. turns out - 
+Postgres IDs are still numeric (bigint); PDO sometimes returns them as strings, which breaks strict === checks. I'll harden ID casting/comparisons and the nullable description NOT NULL mismatch that SQLite often ignores.

@@ -24,6 +24,11 @@ class Settlement extends Model
     protected function casts(): array
     {
         return [
+            'id' => 'integer',
+            'trip_id' => 'integer',
+            'from_user_id' => 'integer',
+            'to_user_id' => 'integer',
+            'confirmed_by' => 'integer',
             'amount' => 'integer',
             'gift_amount' => 'integer',
             'status' => SettlementStatus::class,

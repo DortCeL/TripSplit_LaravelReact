@@ -64,7 +64,7 @@ class TripMemberController extends Controller
     {
         $this->authorize('manageMembers', $trip);
 
-        abort_unless($member->trip_id === $trip->id, 404);
+        abort_unless((int) $member->trip_id === (int) $trip->id, 404);
 
         $validated = $request->validate([
             'role' => ['required', Rule::in(['admin', 'member'])],
@@ -101,7 +101,7 @@ class TripMemberController extends Controller
     {
         $this->authorize('removeMember', [$trip, $member->user]);
 
-        abort_unless($member->trip_id === $trip->id, 404);
+        abort_unless((int) $member->trip_id === (int) $trip->id, 404);
 
         $balance = $balances->forUser($trip, $member->user);
 

@@ -49,7 +49,7 @@ class TripController extends Controller
             $trip = Trip::create([
                 'owner_id' => $request->user()->id,
                 'name' => $validated['name'],
-                'description' => $validated['description'] ?? '',
+                'description' => $validated['description'] ?? null,
                 'status' => TripStatus::Active,
             ]);
 
@@ -114,7 +114,7 @@ class TripController extends Controller
 
         $trip->update([
             'name' => $validated['name'],
-            'description' => $validated['description'] ?? '',
+            'description' => $validated['description'] ?? null,
             'status' => $validated['status'] ?? $trip->status,
         ]);
 

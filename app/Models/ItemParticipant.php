@@ -16,6 +16,9 @@ class ItemParticipant extends Model
     protected function casts(): array
     {
         return [
+            'id' => 'integer',
+            'expense_item_id' => 'integer',
+            'user_id' => 'integer',
             'share_amount' => 'integer',
         ];
     }
