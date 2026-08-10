@@ -99,6 +99,7 @@ class TripController extends Controller
 
         return Inertia::render('Trips/Edit', [
             'trip' => $trip,
+            'isOwner' => $trip->isOwner(request()->user()),
         ]);
     }
 
@@ -132,7 +133,24 @@ class TripController extends Controller
         $this->authorize('delete', $trip);
 
         $name = $trip->name;
-        $trip->delete();
+
+        DB::transaction(function () use ($trip) {
+            $trip->load(['expenses.items']);
+
+            foreach ($trip->expenses as $expense) {
+                foreach ($expense->items as $item) {
+                    $item->payments()->delete();
+                    $item->participants()->delete();
+                }
+
+                $expense->items()->delete();
+            }
+
+            $trip->expenses()->delete();
+            $trip->settlements()->delete();
+            $trip->members()->delete();
+            $trip->delete();
+        });
 
         Inertia::flash([
             'color' => 'red',

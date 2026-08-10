@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type Trip } from '@/types';
+import { type BreadcrumbItem, type SharedData, type Trip } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { MapPin, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { useEffect } from 'react';
@@ -15,7 +15,9 @@ type Flash = { color?: string; message?: string; tripName?: string };
 
 export default function Index() {
     const { flash } = usePage<{ flash?: Flash }>();
-    const { trips } = usePage<{ trips: (Trip & { members_count?: number; owner?: { id: number; name: string } })[] }>().props;
+    const { auth, trips } = usePage<
+        SharedData & { trips: (Trip & { members_count?: number; owner?: { id: number; name: string } })[] }
+    >().props;
 
     useEffect(() => {
         if (!flash?.message) {
@@ -34,7 +36,11 @@ export default function Index() {
     const { processing, delete: destroy } = useForm();
 
     const handleDelete = (id: number, name: string) => {
-        if (confirm(`Are you sure you want to delete the trip - "${name}"?`)) {
+        if (
+            confirm(
+                `Delete "${name}"?\n\nThis permanently removes the trip, members, expenses, payments, and settlements.`,
+            )
+        ) {
             destroy(route('trips.destroy', id));
         }
     };
@@ -58,60 +64,66 @@ export default function Index() {
 
                 {trips.length > 0 ? (
                     <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                        {trips.map((trip) => (
-                            <Card
-                                key={trip.id}
-                                className="group overflow-hidden border-border/80 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
-                            >
-                                <div className="h-1.5 bg-gradient-to-r from-primary via-teal-400 to-amber-300" />
-                                <CardHeader className="pb-3">
-                                    <div className="mb-2 flex items-start justify-between gap-2">
-                                        <CardTitle className="text-xl leading-snug">{trip.name}</CardTitle>
-                                        <Badge variant="secondary" className="capitalize">
-                                            {trip.status ?? 'active'}
-                                        </Badge>
-                                    </div>
-                                    <CardDescription className="line-clamp-2 text-sm leading-relaxed">
-                                        {trip.description || 'No description yet'}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 font-medium text-secondary-foreground">
-                                            <Users className="size-3.5" />
-                                            {trip.members_count ?? 0} members
-                                        </span>
-                                        {trip.owner ? (
-                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1">
-                                                <MapPin className="size-3.5" />
-                                                {trip.owner.name}
+                        {trips.map((trip) => {
+                            const isOwner = Number(trip.owner_id) === Number(auth.user.id);
+
+                            return (
+                                <Card
+                                    key={trip.id}
+                                    className="group overflow-hidden border-border/80 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                                >
+                                    <div className="h-1.5 bg-gradient-to-r from-primary via-teal-400 to-amber-300" />
+                                    <CardHeader className="pb-3">
+                                        <div className="mb-2 flex items-start justify-between gap-2">
+                                            <CardTitle className="text-xl leading-snug">{trip.name}</CardTitle>
+                                            <Badge variant="secondary" className="capitalize">
+                                                {trip.status ?? 'active'}
+                                            </Badge>
+                                        </div>
+                                        <CardDescription className="line-clamp-2 text-sm leading-relaxed">
+                                            {trip.description || 'No description yet'}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 font-medium text-secondary-foreground">
+                                                <Users className="size-3.5" />
+                                                {trip.members_count ?? 0} members
                                             </span>
-                                        ) : null}
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        <Link href={route('trips.show', trip.id)} className="flex-1">
-                                            <Button className="w-full" size="lg">
-                                                Open trip
-                                            </Button>
-                                        </Link>
-                                        <Link href={route('trips.edit', trip.id)}>
-                                            <Button variant="outline" size="lg" className="px-3">
-                                                <Pencil className="size-4" />
-                                            </Button>
-                                        </Link>
-                                        <Button
-                                            variant="outline"
-                                            size="lg"
-                                            className="px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                            disabled={processing}
-                                            onClick={() => handleDelete(trip.id, trip.name)}
-                                        >
-                                            <Trash2 className="size-4" />
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
+                                            {trip.owner ? (
+                                                <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1">
+                                                    <MapPin className="size-3.5" />
+                                                    {trip.owner.name}
+                                                </span>
+                                            ) : null}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            <Link href={route('trips.show', trip.id)} className="flex-1">
+                                                <Button className="w-full" size="lg">
+                                                    Open trip
+                                                </Button>
+                                            </Link>
+                                            <Link href={route('trips.edit', trip.id)}>
+                                                <Button variant="outline" size="lg" className="px-3">
+                                                    <Pencil className="size-4" />
+                                                </Button>
+                                            </Link>
+                                            {isOwner ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="lg"
+                                                    className="px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                    disabled={processing}
+                                                    onClick={() => handleDelete(trip.id, trip.name)}
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </Button>
+                                            ) : null}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
                     </div>
                 ) : (
                     <EmptyState

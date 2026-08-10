@@ -9,12 +9,12 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { Trip, type BreadcrumbItem } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Pencil, TriangleAlert } from 'lucide-react';
+import { Pencil, Trash2, TriangleAlert } from 'lucide-react';
 
 const selectClassName = 'h-11 w-full rounded-xl border border-input bg-background px-3 text-base';
 
 export default function Edit() {
-    const { trip } = usePage<{ trip: Trip }>().props;
+    const { trip, isOwner } = usePage<{ trip: Trip; isOwner: boolean }>().props;
 
     const { data, setData, put, errors, processing } = useForm({
         name: trip.name,
@@ -22,9 +22,21 @@ export default function Edit() {
         status: trip.status ?? 'active',
     });
 
+    const { delete: destroy, processing: deleting } = useForm();
+
     const handleUpdate = (e: React.FormEvent) => {
         e.preventDefault();
         put(route('trips.update', trip.id));
+    };
+
+    const handleDelete = () => {
+        if (
+            confirm(
+                `Delete "${trip.name}"?\n\nThis permanently removes the trip, members, expenses, payments, and settlements.`,
+            )
+        ) {
+            destroy(route('trips.destroy', trip.id));
+        }
     };
 
     return (
@@ -99,16 +111,47 @@ export default function Edit() {
                             </div>
 
                             <div className="flex flex-wrap gap-3">
-                                <Button type="submit" size="lg" disabled={processing}>
+                                <Button type="submit" size="lg" disabled={processing || deleting}>
                                     {processing ? 'Processing...' : 'Save changes'}
                                 </Button>
-                                <Button type="button" variant="outline" size="lg" onClick={() => router.visit(route('trips.show', trip.id))}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="lg"
+                                    onClick={() => router.visit(route('trips.show', trip.id))}
+                                >
                                     Discard
                                 </Button>
                             </div>
                         </form>
                     </CardContent>
                 </Card>
+
+                {isOwner ? (
+                    <Card className="border-destructive/30 shadow-sm">
+                        <CardHeader className="border-b bg-destructive/5">
+                            <CardTitle className="flex items-center gap-2 text-xl text-destructive">
+                                <Trash2 className="size-5" />
+                                Delete trip
+                            </CardTitle>
+                            <CardDescription>
+                                Only the owner can delete this trip. Members, expenses, payments, and settlements are
+                                removed permanently.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="lg"
+                                disabled={processing || deleting}
+                                onClick={handleDelete}
+                            >
+                                {deleting ? 'Deleting...' : 'Delete this trip'}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ) : null}
             </TripPage>
         </AppLayout>
     );

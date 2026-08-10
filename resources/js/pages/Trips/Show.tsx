@@ -61,11 +61,12 @@ export default function Show() {
             balances: Balance[];
             matrix: MatrixRow[];
             canManage: boolean;
+            isOwner: boolean;
             flash?: Flash;
         }
     >();
 
-    const { trip, balances, matrix, canManage, auth } = page.props;
+    const { trip, balances, matrix, canManage, isOwner, auth } = page.props;
     const { flash } = page;
 
     useEffect(() => {
@@ -77,9 +78,16 @@ export default function Show() {
     }, [flash]);
 
     const { delete: destroy, processing } = useForm();
+    const { delete: destroyTrip, processing: deletingTrip } = useForm();
     const you = balances.find((b) => Number(b.user_id) === Number(auth.user.id)) ?? balances[0];
     const owedToYou = Math.max(you?.net_balance ?? 0, 0);
     const youOwe = Math.abs(Math.min(you?.net_balance ?? 0, 0));
+
+    const handleDeleteTrip = () => {
+        if (confirm(`Delete "${trip.name}"?\n\nThis permanently removes the trip, members, expenses, payments, and settlements.`)) {
+            destroyTrip(route('trips.destroy', trip.id));
+        }
+    };
 
     return (
         <AppLayout
@@ -111,6 +119,18 @@ export default function Show() {
                                     Edit
                                 </Button>
                             </Link>
+                            {isOwner ? (
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive gap-2"
+                                    disabled={deletingTrip}
+                                    onClick={handleDeleteTrip}
+                                >
+                                    <Trash2 className="size-4" />
+                                    Delete trip
+                                </Button>
+                            ) : null}
                         </>
                     }
                 />
@@ -142,13 +162,10 @@ export default function Show() {
                                 </div>
                             ) : (
                                 matrix.map((row, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center justify-between gap-3 rounded-xl border bg-secondary/30 px-4 py-3"
-                                    >
+                                    <div key={index} className="bg-secondary/30 flex items-center justify-between gap-3 rounded-xl border px-4 py-3">
                                         <div className="min-w-0">
                                             <p className="truncate font-semibold">{row.from_name}</p>
-                                            <p className="text-sm text-muted-foreground">owes {row.to_name}</p>
+                                            <p className="text-muted-foreground text-sm">owes {row.to_name}</p>
                                         </div>
                                         <Money amount={row.amount} size="md" />
                                     </div>
@@ -189,11 +206,11 @@ export default function Show() {
                                     const total = expense.items.reduce((sum, item) => sum + item.total_amount, 0);
 
                                     return (
-                                        <div key={expense.id} className="overflow-hidden rounded-2xl border bg-card">
-                                            <div className="flex items-start justify-between gap-3 border-b bg-secondary/40 px-4 py-3">
+                                        <div key={expense.id} className="bg-card overflow-hidden rounded-2xl border">
+                                            <div className="bg-secondary/40 flex items-start justify-between gap-3 border-b px-4 py-3">
                                                 <div>
                                                     <h3 className="text-lg font-semibold">{expense.name}</h3>
-                                                    <p className="text-sm text-muted-foreground">
+                                                    <p className="text-muted-foreground text-sm">
                                                         {expense.expense_date || 'No date'}
                                                         {expense.creator ? ` · ${expense.creator.name}` : ''}
                                                     </p>
@@ -219,14 +236,14 @@ export default function Show() {
                                             </div>
                                             <div className="space-y-3 p-4">
                                                 {expense.items.map((item) => (
-                                                    <div key={item.id} className="rounded-xl bg-muted/50 p-4">
+                                                    <div key={item.id} className="bg-muted/50 rounded-xl p-4">
                                                         <div className="mb-3 flex items-center justify-between gap-2">
                                                             <span className="font-semibold">{item.name}</span>
                                                             <Money amount={item.total_amount} size="sm" />
                                                         </div>
                                                         <div className="grid gap-2 text-sm sm:grid-cols-2">
                                                             <div>
-                                                                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                                                <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
                                                                     Split between
                                                                 </p>
                                                                 <div className="flex flex-wrap gap-1.5">
@@ -238,7 +255,7 @@ export default function Show() {
                                                                 </div>
                                                             </div>
                                                             <div>
-                                                                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                                                <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
                                                                     Paid by
                                                                 </p>
                                                                 <div className="flex flex-wrap gap-1.5">
