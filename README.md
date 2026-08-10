@@ -1,6 +1,7 @@
 <img width="2560" height="1440" alt="landing_page" src="https://github.com/user-attachments/assets/7ac34f07-26ce-40d5-969e-d47586b5d20d" />
 
 # TripSplit
+🔗 **Live demo:** [tripsplit.onrender.com]([https://tripsplit.onrender.com](https://tripsplit-y7x6.onrender.com/))
 
 TripSplit is a collaborative expense splitter for friend groups on trips. You create a trip, invite people, log what was spent, and the app keeps track of who paid, who owes what, and how to settle up.
 
