@@ -1,0 +1,7 @@
+* connecting to the neondB was a pain.
+-> proper db password format in .env is : DB_PASSWORD="endpoint=ep-fragrant-sunset-azzrz074;YOUR_PASSWORD"
+ep-fragrant-sunset-azzrz074-pooler.c-3.ap-southeast-1.aws.neon.tech
+│──────────────────────────│ │──────────────────────────────────│
+        endpoint ID                    rest of Neon hostname
+
+        
